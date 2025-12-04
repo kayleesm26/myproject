@@ -94,7 +94,7 @@ def get_mcd(model_or_path, x_data=None, n_samples=100, framework=None, safe_load
             except ImportError:
                 pass
 
-        # Still nothing?
+        # If none detected
         if framework is None:
             raise ValueError("Could not infer framework. Pass framework='torch' or 'tf'.")
 
