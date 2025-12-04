@@ -77,12 +77,26 @@ def get_mcd(model_or_path, x_data=None, n_samples=100, framework=None, safe_load
 
     # Detect framework from loaded object
     if framework is None:
-        if "torch" in str(type(model)).lower():
-            framework = "torch"
-        elif "tensorflow" in str(type(model)).lower() or "keras" in str(type(model)).lower():
-            framework = "tf"
-        else:
-            raise ValueError(" Could not infer framework. Pass framework='torch' or 'tf'.")
+        # Try PyTorch
+        try:
+            import torch
+            if isinstance(model, torch.nn.Module):
+                framework = "torch"
+        except ImportError:
+            pass
+
+        # Try TensorFlow / Keras
+        if framework is None:
+            try:
+                import tensorflow as tf
+                if isinstance(model, (tf.Module, tf.keras.Model)):
+                    framework = "tf"
+            except ImportError:
+                pass
+
+        # Still nothing?
+        if framework is None:
+            raise ValueError("Could not infer framework. Pass framework='torch' or 'tf'.")
 
     print(f" Loaded model using framework='{framework}' ({detected_fmt or 'object provided'})")
 
@@ -91,13 +105,38 @@ def get_mcd(model_or_path, x_data=None, n_samples=100, framework=None, safe_load
 
     if framework == "torch":
         import torch
+
+        # Ensure x_data is a torch.Tensor
+        if not torch.is_tensor(x_data):
+            x_tensor = torch.as_tensor(x_data, dtype=torch.float32)
+        else:
+            x_tensor = x_data
+
+        #  Move x_data + model to same device (if possible)
+        try:
+            device = next(model.parameters()).device
+            model.to(device)
+            x_tensor = x_tensor.to(device)
+        except (StopIteration, AttributeError):
+            device = torch.device("cpu")
+
+        # Enable dropout for MC
         if hasattr(model, "train"):
-            model.train()  # enable dropout
-        with torch.no_grad():
-            for i in range(n_samples):
-                out = model(x_data)
-                out = out.detach().cpu().numpy() if hasattr(out, "detach") else np.array(out)
-                preds.append(out)
+            model.train()
+
+        # Run MC sampling
+        for _ in range(n_samples):
+            with torch.no_grad():
+                out = model(x_tensor)
+
+            # Convert to numpy
+            if hasattr(out, "detach"):
+                out = out.detach().cpu().numpy()
+            else:
+                out = np.array(out)
+
+            preds.append(out)
+
 
     elif framework == "tf":
         import tensorflow as tf

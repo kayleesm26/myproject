@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-#confidence_band more specific name
 
 import numpy as np
 import matplotlib.pyplot as plt

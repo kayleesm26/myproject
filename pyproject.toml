@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "uq-calculator"
-version = "0.1.2"
-description = "Run Monte Carlo sampling and calculate metrics."
+version = "0.1.3"
+description = "Run Monte Carlo sampling and calculate UQ metrics."
 readme = "README.md"
 authors = ["Kaylee Smith"]
 license = "MIT"
-keywords = ["ECE", "uncertainty", "calibration", "machine learning", "NLL", "MCD"]
+keywords = ["ECE", "uncertainty", "calibration", "machine learning", "NLL", "MCD", "ECE", "confidence"]
 packages = [{ include = "uq_calculator", from = "src" }]
 
 [tool.poetry.dependencies]
